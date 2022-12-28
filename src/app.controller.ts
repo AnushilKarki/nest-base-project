@@ -8,6 +8,8 @@ import {
   Delete,
   Request,
   UseGuards,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { TodoService } from './todo.service';
@@ -15,9 +17,12 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { User as UserModel, Todo as TodoModel } from '@prisma/client';
 import { LocalAuthGuard } from './auth/local-auth.guard';
 import { AuthService } from './auth/auth.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Express } from 'express';
 
 @Controller()
 export class AppController {
+  prisma: any;
   @UseGuards(LocalAuthGuard)
   @Post('auth/login')
   async login(@Request() req) {
@@ -29,9 +34,7 @@ export class AppController {
   getProfile(@Request() req) {
     return req.user;
   }
-  getHello(): any {
-    throw new Error('Method not implemented.');
-  }
+
   constructor(
     private readonly userService: UserService,
     private readonly todoService: TodoService,
@@ -43,11 +46,28 @@ export class AppController {
     return this.todoService.todo({ id: Number(id) });
   }
 
+  @Get('user/:id')
+  async getUserById(@Param('id') id: string): Promise<UserModel> {
+    return this.userService.user({ id: Number(id) });
+  }
+
   @Get('feed')
   async getPublishedTodos(): Promise<TodoModel[]> {
     return this.todoService.todos({
       where: { status: 'completed' },
     });
+  }
+
+  @Get('nsfeed')
+  async getNotStartedTodos(): Promise<TodoModel[]> {
+    return this.todoService.todos({
+      where: { status: 'not_started' },
+    });
+  }
+
+  @Get('all')
+  async getTodos() {
+    return this.todoService.allTodo();
   }
 
   @Get('filtered-todos/:searchString')
@@ -68,16 +88,33 @@ export class AppController {
     });
   }
 
+  @UseInterceptors(FileInterceptor('file'))
   @Post('todo')
   async createTodo(
-    @Body() todoData: { title: string; description: string; status: string },
+    @Body()
+    todoData: {
+      title: string;
+      description: string;
+      status: string;
+      file: string;
+    },
   ): Promise<TodoModel> {
     const { title, description, status } = todoData;
     return this.todoService.createTodo({
       title,
       description,
       status,
+      file: '',
     });
+  }
+  uploadFile(
+    @Body() body: { file: string },
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return {
+      body,
+      file: file.buffer.toString(),
+    };
   }
 
   @Post('user')

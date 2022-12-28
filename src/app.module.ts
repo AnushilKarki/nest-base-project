@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
+import { main } from './softdelete.middleware';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
@@ -12,4 +13,10 @@ import { UsersModule } from './users/users.module';
   controllers: [AppController],
   providers: [AppService, PrismaService, UserService, TodoService],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(main)
+      .forRoutes({ path: 'todo', method: RequestMethod.DELETE });
+  }
+}

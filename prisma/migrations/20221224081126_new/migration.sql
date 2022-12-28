@@ -16,6 +16,8 @@ CREATE TABLE "Todo" (
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "status" TEXT NOT NULL,
+    "file" TEXT NOT NULL,
+    "deleted" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 

@@ -53,4 +53,14 @@ export class TodoService {
       where,
     });
   }
+  async allTodo() {
+    return this.prisma.todo.findMany({
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+      },
+    });
+  }
 }
