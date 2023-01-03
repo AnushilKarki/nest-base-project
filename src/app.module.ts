@@ -7,9 +7,16 @@ import { TodoService } from './todo.service';
 import { UserService } from './user.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
-  imports: [AuthModule, UsersModule],
+  imports: [
+    AuthModule,
+    UsersModule,
+    MulterModule.register({
+      dest: './upload',
+    }),
+  ],
   controllers: [AppController],
   providers: [AppService, PrismaService, UserService, TodoService],
 })

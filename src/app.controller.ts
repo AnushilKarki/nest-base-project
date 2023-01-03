@@ -8,8 +8,11 @@ import {
   Delete,
   Request,
   UseGuards,
-  UploadedFile,
   UseInterceptors,
+  UploadedFiles,
+  ParseFilePipeBuilder,
+  UploadedFile,
+  Res,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { TodoService } from './todo.service';
@@ -19,7 +22,16 @@ import { LocalAuthGuard } from './auth/local-auth.guard';
 import { AuthService } from './auth/auth.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
+import { SampleDto } from './sample.dto';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+// import multer, { diskStorage } from 'multer';
+// import { ApiConsumes } from '@nestjs/swagger';
+// import express from 'express';
 
+// const upload = multer({ dest: 'uploads/' });
+
+// const app = express();
 @Controller()
 export class AppController {
   prisma: any;
@@ -88,28 +100,95 @@ export class AppController {
     });
   }
 
-  @UseInterceptors(FileInterceptor('file'))
+  // @UseInterceptors(FileInterceptor('file'))
+  // @ApiConsumes('multipart/form-data')
   @Post('todo')
+  @UseInterceptors(
+    FileInterceptor(
+      'file',
+      // , {
+      //   storage: diskStorage({
+      //     destination: './files',
+      //     filename: (req, file, callback) => {
+      //       // const uniqueSuffix = Date.now() + '=' + Math.round(Math.random() * 1e9);
+      //       // const ext = extname(file.originalname);
+      //       const filename = 'dsfds';
+      //       callback(null, filename);
+      //     },
+      //   }),
+      // }
+    ),
+  )
   async createTodo(
-    @Body()
-    todoData: {
-      title: string;
-      description: string;
-      status: string;
-      file: string;
-    },
+    @Body() body: SampleDto,
+    @UploadedFiles()
+    file,
+    @Res() res,
+    // : Express.Multer.File,
   ): Promise<TodoModel> {
-    const { title, description, status } = todoData;
-    return this.todoService.createTodo({
-      title,
-      description,
-      status,
-      file: '',
-    });
+    // return {
+    //   body,
+    //   file: file.buffer.toString(),
+    // };
+    console.log(file);
+
+    // const upload = multer({ dest: 'uploads/' });
+    // const upload = multer({ storage: storage });
+    // upload.single('file'),
+    //   function (req, res, next) {
+    // req.file is the `avatar` file
+    // req.body will hold the text fields, if there were any
+    // const storage = multer.diskStorage({
+    //   destination: function (req, file, cb) {
+    //     cb(null, '/tmp/my-uploads');
+    //   },
+    //   filename: function (req, file, cb) {
+    //     const uniqueSuffix =
+    //       Date.now() + '-' + Math.round(Math.random() * 1e9);
+    //     cb(null, file.fieldname + '-' + uniqueSuffix);
+    //   },
+    // });
+
+    //   const upload = multer({ storage: storage });
+    //   console.log(upload);
+    // };
+    // this.todoService.upload();
+    return res;
+    // return this.todoService.createTodo(body);
   }
-  uploadFile(
-    @Body() body: { file: string },
-    @UploadedFile() file: Express.Multer.File,
+  @UseInterceptors(FileInterceptor('file'))
+  @Post('file/pass-validation')
+  uploadFileAndPassValidation(
+    @Body() body: SampleDto,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addFileTypeValidator({
+          fileType: 'json',
+        })
+        .build({
+          fileIsRequired: false,
+        }),
+    )
+    file?: Express.Multer.File,
+  ) {
+    return {
+      body,
+      file: file?.buffer.toString(),
+    };
+  }
+
+  @UseInterceptors(FileInterceptor('file'))
+  @Post('file/fail-validation')
+  uploadFileAndFailValidation(
+    @Body() body: SampleDto,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addFileTypeValidator({
+          fileType: 'jpg',
+        })
+        .build(),
+    )
+    file: Express.Multer.File,
   ) {
     return {
       body,
